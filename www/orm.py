@@ -244,7 +244,7 @@ class Model(dict,metaclass=ModelMetaclass):
         return [cls(**r) for r in rs]
 
 
-    # 还不清楚该方法的作用
+    # todo 还不清楚该方法的作用
     @classmethod
     async def findNumber(cls,selectField,where=None,args=None):
         "find number by select and where"

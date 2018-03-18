@@ -16,7 +16,7 @@ def get(path):
     Define decorator @get("/path")
     """
     def decorator(func):
-        functools.wraps(func)
+        @functools.wraps(func)
         def wrapper(*args, **kw):
             return func(*args, **kw)
         wrapper.__method__ = 'GET'
@@ -30,7 +30,7 @@ def post(path):
     Define decorator @post("/path")
     """
     def decorator(func):
-        functools.wraps(func)
+        @functools.wraps(func)
         def wrapper(*args, **kw):
             return func(*args, **kw)
         wrapper.__method__ = "POST"
@@ -81,7 +81,7 @@ def has_request_arg(fn):
     params = sig.parameters
     found = False
     for name, param in params.items():
-        if name == "request":
+        if name == 'request':
             found = True
             continue
         if found and (param.kind != inspect.Parameter.VAR_POSITIONAL and param.kind != inspect.Parameter.KEYWORD_ONLY and param.kind != inspect.Parameter.VAR_KEYWORD):
