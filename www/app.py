@@ -102,7 +102,7 @@ async def response_factory(app,handler):
             template = r.get('__template__',None)
             if template is None:
                 # ensure_ascii：默认True，仅能输出ascii格式数据。故设置为False。
-                resp = web.Response(body=json.dumps(r,ensure_ascii=False,default=lambda o: o.__dict__).encode("utf-8"))
+                resp = web.Response(body=json.dumps(r, ensure_ascii=False,default=lambda o: o.__dict__).encode("utf-8"))
                 resp.content_type = 'application/json;charset=utf-8'
                 return resp
             else:
