@@ -183,10 +183,9 @@ class ModelMetaclass(type):
 """
 
 
-
 # 所有ORM映射的基类Model
-class Model(dict,metaclass=ModelMetaclass):
-    def __init__(self,**kw):
+class Model(dict, metaclass=ModelMetaclass):
+    def __init__(self, **kw):
         # super().__init__(**kw)
         super(Model, self).__init__(**kw)
 
