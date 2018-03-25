@@ -67,7 +67,7 @@ async def select(sql,args,size=None):
             return rs
 
 
-async def execute(sql,args,autocommit=True):
+async def execute(sql, args, autocommit=True):
     log(sql)
     async with __pool.acquire() as conn:
         if not autocommit:
@@ -144,11 +144,11 @@ class ModelMetaclass(type):
         mappings = dict()
         fields = []
         primaryKey = None
-        for k,v in attrs.items():
+        for k, v in attrs.items():
             # 是列名的就保存下来
-            if isinstance(v,Field):
+            if isinstance(v, Field):
                 # 如 id = IntegerField("id"), k为id，v为实例
-                logging.info(" found mapping: %s ==> %s" % (k,v))
+                logging.info(" found mapping: %s ==> %s" % (k, v))
                 mappings[k] = v
                 if v.primary_key:
                     # 找到主键
@@ -160,21 +160,20 @@ class ModelMetaclass(type):
                     fields.append(k)
         if not primaryKey:
             raise RuntimeError("Primary key not found")
-        # 去除Field，否则创建实例时会跟实例属性冲突
+        # 从类属性中去除Field，否则，容易造成运行时错误（实例的属性会遮盖类的同名属性）
         for k in mappings.keys():
             attrs.pop(k)
-        escaped_fields = list(map(lambda f:'`%s`' % f,fields))
-        attrs['__mapping__'] = mappings  #保存属性和列的映射关系
+        escaped_fields = list(map(lambda f:'`%s`' % f, fields))
+        attrs['__mapping__'] = mappings  #保存属性和列的映射关系 如 id = IntegerField()
         attrs["__table__"] = tableName    #表名
-        attrs["__primary_key__"] = primaryKey   #主键属性名
-        attrs["__fields__"] = fields  # 除主键外的属性名
+        attrs["__primary_key__"] = primaryKey   #主键属性名 如 id
+        attrs["__fields__"] = fields  # 除主键外的属性名   如 name、age等
         # 构造默认的SELECT,INSERT,UPDATE和DELETE语句：
         # 其中添加的反引号``,是为了避免与sql关键字冲突的,否则sql语句会执行出错
         attrs["__select__"] = "select `%s`,%s from `%s`" % (primaryKey,','.join(escaped_fields),tableName)
         attrs['__insert__'] = "insert into `%s` (%s,`%s`) VALUES (%s)" % (tableName,','.join(escaped_fields),primaryKey,
                                                                           create_args_string(len(escaped_fields) + 1))
-        attrs['__update__'] = "update `%s` set %s where `%s`=?" % (tableName,','.join(map(lambda f:'`%s`=?'%(mappings.get(f).name),fields
-                                                                                          )),primaryKey)
+        attrs['__update__'] = "update `%s` set %s where `%s`=?" % (tableName, ','.join(map(lambda f: '`%s`=?' % (mappings.get(f).name), fields)), primaryKey)
         attrs['__delete__'] = "delete from `%s` where `%s`=?" % (tableName,primaryKey)
         return type.__new__(cls,name,bases,attrs)
 """反引号是为了区分的保留字与普通字符而引入的符号。
@@ -198,21 +197,21 @@ class Model(dict, metaclass=ModelMetaclass):
     def __setattr__(self, key, value):
         self[key] = value
 
-    def getValue(self,key):
+    def getValue(self, key):
         # 获取对象object的属性或者方法
         # 调用getattr获取一个未存在的属性,也会走__getattr__方法,但是因为指定了默认返回的值,__getattr__里面的
         # 错误永远不会抛出
-        return getattr(self,key,None)
+        return getattr(self, key, None)
 
-    def getValueOrDefault(self,key):
-        value = getattr(self,key,None)
+    def getValueOrDefault(self, key):
+        value = getattr(self, key, None)
         if value is None:
             field = self.__mapping__[key]
             if field.default is not None:
                 # field.default是方法的话就调用，否则返回值
                 value = field.default() if callable(field.default) else field.default
-                logging.debug("using default value for %s: %s" % (key,str(value)))
-                setattr(self,key,value)
+                logging.debug("using default value for %s: %s" % (key, str(value)))
+                setattr(self, key, value)
         return value
 
     @classmethod
@@ -242,12 +241,11 @@ class Model(dict, metaclass=ModelMetaclass):
         rs = await select(' '.join(sql),args)
         return [cls(**r) for r in rs]
 
-
-    # todo 还不清楚该方法的作用
+    # 查询数量
     @classmethod
     async def findNumber(cls,selectField,where=None,args=None):
         "find number by select and where"
-        sql  = ['select %s _num_ from `%s`' % (selectField, cls.__table__)]
+        sql = ['select %s _num_ from `%s`' % (selectField, cls.__table__)]    # _num_ :别名
         if where:
             sql.append("where")
             sql.append(where)
@@ -255,8 +253,6 @@ class Model(dict, metaclass=ModelMetaclass):
         if len(rs) == 0:
             return None
         return rs[0]['_num_']
-
-
 
     @classmethod
     async def find(cls,pk):
@@ -267,14 +263,12 @@ class Model(dict, metaclass=ModelMetaclass):
             # 类似[('2', 'Michael')] ? 但这里数据库返回的列表的元素是字典
         return cls(**rs[0])
 
-
     async def save(self):
-        args = list(map(self.getValueOrDefault,self.__fields__))
+        args = list(map(self.getValueOrDefault, self.__fields__))
         args.append(self.getValueOrDefault(self.__primary_key__))
         rows = await execute(self.__insert__, args)
         if rows != 1:
             logging.warning('failed to insert record: affected rows: %s' % rows)
-
 
     async def update(self):
         args = list(map(self.getValue,self.__fields__))

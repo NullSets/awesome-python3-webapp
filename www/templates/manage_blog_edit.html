@@ -7,7 +7,8 @@
 <script>
 
     var
-        ID = '{{ id }}';
+        ID = '{{ id }}',
+        action = '{{ action }}';
 
 function initVM(blog) {
     var vm = new Vue({
@@ -17,7 +18,7 @@ function initVM(blog) {
             submit: function (event) {
                 event.preventDefault();
                 var $form = $('#vm').find('form');
-                $form.postJSON("/manage/blogs/edit/save", this.$data, function (err, r) {
+                $form.postJSON(action, this.$data, function (err, r) {
                     if (err) {
                         $form.showFormError(err);
                     }
@@ -31,13 +32,24 @@ function initVM(blog) {
     $('#vm').show();
 }
 $(function () {
-    getJSON('/manage/blogs/edit/get', {'id':ID},function (err, blog) {
+    if(ID){
+         getJSON('/api/blogs/'+ID,function (err, blog) {
             if (err) {
                 return fatal(err);
             }
             $('#loading').hide();
             initVM(blog);
-    });
+         });
+    }
+    else{
+        $('#loading').hide();
+        initVM({
+            name: '',
+            summary: '',
+            content: ''
+        });
+    }
+
 });
 </script>
 

@@ -60,7 +60,7 @@ async def logger_factory(app,handler):
     async def logger(request):
         logging.info("Request: %s %s" % (request.method,request.path))
         # await asyncio.sleep(0.3)
-        logging.info("logger_factory.................%s" % str(handler))
+        #logging.info("logger_factory.................%s" % str(handler))
         return (await handler(request))
     return logger
 
@@ -84,7 +84,7 @@ async def data_factory(app, handler):
 async def response_factory(app,handler):
     async def response(request):
         logging.info("Response handler...")
-        logging.info("response_factory.................%s" % str(handler))
+        #logging.info("response_factory.................%s" % str(handler))
         r = await handler(request)
         logging.info("Response result = %s" % str(r))
         if isinstance(r,web.StreamResponse):  # StreamResponse是所有Response对象的父类
